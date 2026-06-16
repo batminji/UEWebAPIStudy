@@ -166,16 +166,101 @@ void URankingSubsystem::OnAddGameResultResponse(FHttpRequestPtr Request, FHttpRe
 
 void URankingSubsystem::OnGetGameResultsResponse(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful)
 {
+	TArray<FGameResult> RankingList;
+	if (!bWasSuccessful || !Response.IsValid() || Response->GetResponseCode() != 200)
+	{
+		OnGetRankingListCompleted.Broadcast(RankingList);
+		return;
+	}
+
+	FString ResponseContent = Response->GetContentAsString();
+
+	TArray<TSharedPtr<FJsonValue>> JsonArray;
+
+	TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(ResponseContent);
+
+	bool bParseSuccess = FJsonSerializer::Deserialize(Reader, JsonArray);
+
+	if (!bParseSuccess)
+	{
+		OnGetRankingListCompleted.Broadcast(RankingList);
+		return;
+	}
+
+	for(const TSharedPtr<FJsonValue>& JsonValue : JsonArray)
+	{
+		TSharedPtr<FJsonObject> JsonObject = JsonValue->AsObject();
+		if(JsonObject.IsValid())
+		{
+			FGameResult GameResult;
+			JsonObjectToGameResult(JsonObject, GameResult);
+			RankingList.Add(GameResult);
+		}
+	}
+
+	OnGetRankingListCompleted.Broadcast(RankingList);
 }
 
 void URankingSubsystem::OnGetGameResultByIdResponse(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful)
 {
+	if (!bWasSuccessful || !Response.IsValid() || Response->GetResponseCode() != 200)
+	{
+		OnGetSingleRankingCompleted.Broadcast(false, FGameResult());
+		return;
+	}
+
+	FString ResponseContent = Response->GetContentAsString();
+
+	if(ResponseContent.IsEmpty() || ResponseContent.Equals(TEXT("null"), ESearchCase::IgnoreCase))
+	{
+		OnGetSingleRankingCompleted.Broadcast(false, FGameResult());
+		return;
+	}
+
+	TSharedPtr<FJsonObject> JsonObject;
+
+	TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(ResponseContent);
+
+	bool bParseSuccess = FJsonSerializer::Deserialize(Reader, JsonObject);
+
+	if (!bParseSuccess || !JsonObject.IsValid())
+	{
+		OnGetSingleRankingCompleted.Broadcast(false, FGameResult());
+		return;
+	}
+
+	FGameResult GameResult;
+
+	JsonObjectToGameResult(JsonObject, GameResult);
+
+	OnGetSingleRankingCompleted.Broadcast(true, GameResult);
 }
 
 void URankingSubsystem::OnUpdateGameResultResponse(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful)
 {
+	if (!bWasSuccessful || !Response.IsValid() || Response->GetResponseCode() != 200)
+	{
+		OnActionCompleted.Broadcast(false);
+		return;
+	}
+
+	FString ResponseContent = Response->GetContentAsString();
+
+	bool bSuccess = ResponseContent.Equals(TEXT("true"), ESearchCase::IgnoreCase);			// 서버에서 "true"라는 문자열이 오면 성공으로 간주
+
+	OnActionCompleted.Broadcast(bSuccess);													// Http 통신 성공
 }
 
 void URankingSubsystem::OnDeleteGameResultResponse(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful)
 {
+	if (!bWasSuccessful || !Response.IsValid() || Response->GetResponseCode() != 200)
+	{
+		OnActionCompleted.Broadcast(false);
+		return;
+	}
+	FString ResponseContent = Response->GetContentAsString();
+
+	bool bSuccess = ResponseContent.Equals(TEXT("true"), ESearchCase::IgnoreCase);			// 서버에서 "true"라는 문자열이 오면 성공으로 간주
+	
+	OnActionCompleted.Broadcast(bSuccess);													// Http 통신 성공
 }
