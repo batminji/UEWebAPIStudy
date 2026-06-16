@@ -56,7 +56,7 @@ public:
 	void GetGameResultById(int32 TargetId);
 
 	UFUNCTION(BlueprintCallable, Category = "Ranking")
-	void UpdateGameResult(int32 TargetId, const FGameResult& UpdatedResult);
+	void UpdateGameResult(FGameResult UpdatedResult);
 
 	UFUNCTION(BlueprintCallable, Category = "Ranking")
 	void DeleteGameResult(int32 TargetId);
@@ -76,8 +76,6 @@ private:
 	FString BaseUrl = TEXT("http://localhost:9999/api/Ranking");
 
 private:
-	// FGameResult를 Json 문자열로 변환하는 헬퍼 함수
-	FString ConvertGameResultToJson(const FGameResult& GameResult);
 
 	// Post
 	void OnAddGameResultResponse(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful);

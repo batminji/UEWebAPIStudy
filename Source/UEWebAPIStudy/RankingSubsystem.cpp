@@ -81,7 +81,7 @@ void URankingSubsystem::AddGameResult(FGameResult NewResult)
 
 	HttpRequest->SetHeader(TEXT("Content-Type"), TEXT("application/json"));										// 서버에 Json 형식의 데이터를 보낼 것임을 알리는 헤더 설정
 
-	HttpRequest->SetContentAsString(ConvertGameResultToJson(NewResult));										// 요청 본문 설정 (JSON 문자열)
+	HttpRequest->SetContentAsString(MakeJsonFromGameResult(NewResult));										// 요청 본문 설정 (JSON 문자열)
 
 	HttpRequest->OnProcessRequestComplete().BindUObject(this, &URankingSubsystem::OnAddGameResultResponse);		// 요청이 완료되었을 때 호출될 콜백 함수 바인딩
 
@@ -114,21 +114,54 @@ void URankingSubsystem::GetGameResultById(int32 TargetId)
 	HttpRequest->ProcessRequest();																				// 요청 전송
 }
 
-void URankingSubsystem::UpdateGameResult(int32 TargetId, const FGameResult& UpdatedResult)
+void URankingSubsystem::UpdateGameResult(FGameResult UpdatedResult)
 {
+	if (UpdatedResult.Date.IsEmpty())
+	{
+		UpdatedResult.Date = FDateTime::UtcNow().ToIso8601();
+	}
+
+	TSharedRef<IHttpRequest, ESPMode::ThreadSafe> HttpRequest = FHttpModule::Get().CreateRequest();
+
+	HttpRequest->SetURL(BaseUrl + FString::Printf(TEXT("/%d"), UpdatedResult.Id));								// 연결할 Endpoint URL 설정 (ID 포함)
+
+	HttpRequest->SetVerb(TEXT("PUT"));																			// HTTP 메서드 설정 (POST, GET, PUT, DELETE 등)
+
+	HttpRequest->SetHeader(TEXT("Content-Type"), TEXT("application/json"));										// 서버에 Json 형식의 데이터를 보낼 것임을 알리는 헤더 설정
+
+	HttpRequest->SetContentAsString(MakeJsonFromGameResult(UpdatedResult));										// 요청 본문 설정 (JSON 문자열)
+
+	HttpRequest->OnProcessRequestComplete().BindUObject(this, &URankingSubsystem::OnUpdateGameResultResponse);	// 요청이 완료되었을 때 호출될 콜백 함수 바인딩
+
+	HttpRequest->ProcessRequest();																				// 요청 전송
 }
 
 void URankingSubsystem::DeleteGameResult(int32 TargetId)
 {
-}
-
-FString URankingSubsystem::ConvertGameResultToJson(const FGameResult& GameResult)
-{
-	return FString();
+	TSharedRef<IHttpRequest, ESPMode::ThreadSafe> HttpRequest = FHttpModule::Get().CreateRequest();
+	
+	HttpRequest->SetURL(BaseUrl + FString::Printf(TEXT("/%d"), TargetId));										// 연결할 Endpoint URL 설정 (ID 포함)
+	
+	HttpRequest->SetVerb(TEXT("DELETE"));																		// HTTP 메서드 설정 (POST, GET, PUT, DELETE 등)
+	
+	HttpRequest->OnProcessRequestComplete().BindUObject(this, &URankingSubsystem::OnDeleteGameResultResponse);	// 요청이 완료되었을 때 호출될 콜백 함수 바인딩
+	
+	HttpRequest->ProcessRequest();																				// 요청 전송
 }
 
 void URankingSubsystem::OnAddGameResultResponse(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful)
 {
+	if(!bWasSuccessful || !Response.IsValid() || Response->GetResponseCode() != 200)
+	{
+		OnActionCompleted.Broadcast(false);
+		return;
+	}
+
+	FString ResponseContent = Response->GetContentAsString();
+
+	bool bSuccess = ResponseContent.Equals(TEXT("true"), ESearchCase::IgnoreCase);			// 서버에서 "true"라는 문자열이 오면 성공으로 간주
+
+	OnActionCompleted.Broadcast(bSuccess);													// Http 통신 성공
 }
 
 void URankingSubsystem::OnGetGameResultsResponse(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful)
