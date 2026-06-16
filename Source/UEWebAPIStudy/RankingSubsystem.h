@@ -47,7 +47,7 @@ class UEWEBAPISTUDY_API URankingSubsystem : public UGameInstanceSubsystem
 	
 public:
 	UFUNCTION(BlueprintCallable, Category = "Ranking")
-	void AddGameResult(const FGameResult& NewResult);
+	void AddGameResult(FGameResult NewResult);
 
 	UFUNCTION(BlueprintCallable, Category = "Ranking")
 	void GetGameResults();
