@@ -28,7 +28,7 @@ struct FGameResult
 	int32 Score = 0;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Game Result")
-	FString FDate = "";
+	FString Date = "";
 };
 
 // Add, Update, Delete 결과용 델리게이트
