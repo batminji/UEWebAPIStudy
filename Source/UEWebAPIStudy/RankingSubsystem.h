@@ -70,4 +70,23 @@ public:
 
 	UPROPERTY(BlueprintAssignable, Category = "Ranking|Delegates")
 	FOnGetSingleRankingSignature OnGetSingleRankingCompleted;
+
+private:
+	// ASP.NET WebAPI 주소
+	FString BaseUrl = TEXT("http://localhost:9999/api/Ranking");
+
+private:
+	// FGameResult를 Json 문자열로 변환하는 헬퍼 함수
+	FString ConvertGameResultToJson(const FGameResult& GameResult);
+
+	// Post
+	void OnAddGameResultResponse(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful);
+	// Get
+	void OnGetGameResultsResponse(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful);
+
+	void OnGetGameResultByIdResponse(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful);
+	// Put
+	void OnUpdateGameResultResponse(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful);
+	// Delete
+	void OnDeleteGameResultResponse(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful);
 };
