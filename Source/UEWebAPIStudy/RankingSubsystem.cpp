@@ -72,6 +72,7 @@ void URankingSubsystem::AddGameResult(FGameResult NewResult)
 	{
 		NewResult.Date = FDateTime::UtcNow().ToIso8601();
 	}
+
 	TSharedRef<IHttpRequest, ESPMode::ThreadSafe> HttpRequest = FHttpModule::Get().CreateRequest();
 
 	HttpRequest->SetURL(BaseUrl);																				// 연결할 Endpoint URL 설정
@@ -89,10 +90,28 @@ void URankingSubsystem::AddGameResult(FGameResult NewResult)
 
 void URankingSubsystem::GetGameResults()
 {
+	TSharedRef<IHttpRequest, ESPMode::ThreadSafe> HttpRequest = FHttpModule::Get().CreateRequest();
+
+	HttpRequest->SetURL(BaseUrl);																				// 연결할 Endpoint URL 설정
+
+	HttpRequest->SetVerb(TEXT("GET"));																			// HTTP 메서드 설정 (POST, GET, PUT, DELETE 등)
+
+	HttpRequest->OnProcessRequestComplete().BindUObject(this, &URankingSubsystem::OnGetGameResultsResponse);	// 요청이 완료되었을 때 호출될 콜백 함수 바인딩
+
+	HttpRequest->ProcessRequest();																				// 요청 전송
 }
 
 void URankingSubsystem::GetGameResultById(int32 TargetId)
 {
+	TSharedRef<IHttpRequest, ESPMode::ThreadSafe> HttpRequest = FHttpModule::Get().CreateRequest();
+
+	HttpRequest->SetURL(BaseUrl + FString::Printf(TEXT("/%d"), TargetId));										// 연결할 Endpoint URL 설정 (ID 포함)
+	
+	HttpRequest->SetVerb(TEXT("GET"));																			// HTTP 메서드 설정 (POST, GET, PUT, DELETE 등)
+	
+	HttpRequest->OnProcessRequestComplete().BindUObject(this, &URankingSubsystem::OnGetGameResultByIdResponse);	// 요청이 완료되었을 때 호출될 콜백 함수 바인딩
+	
+	HttpRequest->ProcessRequest();																				// 요청 전송
 }
 
 void URankingSubsystem::UpdateGameResult(int32 TargetId, const FGameResult& UpdatedResult)
