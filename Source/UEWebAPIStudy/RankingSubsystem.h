@@ -40,7 +40,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnGetRankingListSignature, const TA
 // 단일 랭킹 조회 결과용 델리게이트
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnGetSingleRankingSignature, bool, bSuccess, const FGameResult&, GameResult);
 
-UCLASS()
+UCLASS(BlueprintType)
 class UEWEBAPISTUDY_API URankingSubsystem : public UGameInstanceSubsystem
 {
 	GENERATED_BODY()
@@ -76,7 +76,6 @@ private:
 	FString BaseUrl = TEXT("http://localhost:9999/api/Ranking");
 
 private:
-
 	// Post
 	void OnAddGameResultResponse(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful);
 	// Get
