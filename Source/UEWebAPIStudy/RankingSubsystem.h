@@ -73,7 +73,7 @@ public:
 
 private:
 	// ASP.NET WebAPI 주소
-	FString BaseUrl = TEXT("http://localhost:9999/api/Ranking");
+	FString BaseUrl = TEXT("http://localhost:9090/api/Ranking");
 
 private:
 	// Post
